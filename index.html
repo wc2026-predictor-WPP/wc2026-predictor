@@ -44,8 +44,9 @@
   .register-box p { font-size: 13px; color: var(--muted); margin-bottom: 1.5rem; }
   .register-box input { width: 100%; padding: .65rem 1rem; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 15px; margin-bottom: .75rem; outline: none; }
   .register-box input:focus { border-color: var(--navy); }
-  .register-box button { width: 100%; padding: .7rem; background: var(--navy); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; }
+  .register-box button { width: 100%; padding: .7rem; background: var(--navy); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; cursor: pointer; pointer-events: all; }
   .register-box button:hover { background: #1a4a7a; }
+  .register-box button:disabled { opacity: .5; cursor: not-allowed; }
   .register-box .entry-note { font-size: 12px; color: var(--muted); margin-top: .75rem; }
 
   /* HEADER */
@@ -175,7 +176,7 @@
     <h1>WC2026 Office Predictor</h1>
     <p>Pick match winners · 3 pts per correct call · Entry ₹500</p>
     <input type="text" id="reg-name" placeholder="Your name" maxlength="24" autocomplete="off" />
-    <button onclick="register()">Join the game →</button>
+    <button type="button" id="join-btn" onclick="register()">Join the game →</button>
     <div class="entry-note">Selections lock 1 hour before each kickoff</div>
   </div>
 </div>
@@ -238,38 +239,39 @@ const ADMIN_PASSWORD = "wc2026admin";
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// All dates stored as UTC so IST display (UTC+5:30) is always correct
 const MATCHES = [
-  {id:'m73',round:'R32',num:73,home:'South Africa',homeFlag:'🇿🇦',away:'Canada',awayFlag:'🇨🇦',date:'2026-06-28T20:00:00',venue:'Los Angeles'},
-  {id:'m74',round:'R32',num:74,home:'Germany',homeFlag:'🇩🇪',away:'3rd Place TBD',awayFlag:'🏳️',date:'2026-06-29T21:30:00',venue:'Foxborough'},
-  {id:'m75',round:'R32',num:75,home:'Netherlands',homeFlag:'🇳🇱',away:'Morocco',awayFlag:'🇲🇦',date:'2026-06-30T02:00:00',venue:'Guadalajara'},
-  {id:'m76',round:'R32',num:76,home:'Brazil',homeFlag:'🇧🇷',away:'Japan',awayFlag:'🇯🇵',date:'2026-06-29T18:00:00',venue:'Houston'},
-  {id:'m77',round:'R32',num:77,home:'Grp I Winner',homeFlag:'🏳️',away:'3rd Place TBD',awayFlag:'🏳️',date:'2026-06-30T22:00:00',venue:'New Jersey'},
-  {id:'m78',round:'R32',num:78,home:'Ivory Coast',homeFlag:'🇨🇮',away:'Grp I Runner-up',awayFlag:'🏳️',date:'2026-06-30T18:00:00',venue:'Arlington'},
-  {id:'m79',round:'R32',num:79,home:'Mexico',homeFlag:'🇲🇽',away:'3rd Place TBD',awayFlag:'🏳️',date:'2026-07-01T02:00:00',venue:'Mexico City'},
-  {id:'m80',round:'R32',num:80,home:'Grp L Winner',homeFlag:'🏳️',away:'3rd Place TBD',awayFlag:'🏳️',date:'2026-07-01T17:00:00',venue:'Atlanta'},
-  {id:'m81',round:'R32',num:81,home:'USA',homeFlag:'🇺🇸',away:'Bosnia-Herzegovina',awayFlag:'🇧🇦',date:'2026-07-02T01:00:00',venue:'Santa Clara'},
-  {id:'m82',round:'R32',num:82,home:'Grp G Winner',homeFlag:'🏳️',away:'3rd Place TBD',awayFlag:'🏳️',date:'2026-07-01T21:00:00',venue:'Seattle'},
-  {id:'m83',round:'R32',num:83,home:'Spain',homeFlag:'🇪🇸',away:'Grp H/J/K Runner-up',awayFlag:'🏳️',date:'2026-07-02T18:00:00',venue:'Miami'},
-  {id:'m84',round:'R32',num:84,home:'Grp D Runner-up',homeFlag:'🏳️',away:'Grp G Runner-up',awayFlag:'🏳️',date:'2026-07-02T22:00:00',venue:'Dallas'},
-  {id:'m85',round:'R32',num:85,home:'England',homeFlag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',away:'Grp J/K Runner-up',awayFlag:'🏳️',date:'2026-07-03T02:00:00',venue:'Vancouver'},
-  {id:'m86',round:'R32',num:86,home:'Argentina',homeFlag:'🇦🇷',away:'Ecuador',awayFlag:'🇪🇨',date:'2026-07-03T18:00:00',venue:'Philadelphia'},
-  {id:'m87',round:'R32',num:87,home:'France',homeFlag:'🇫🇷',away:'Colombia',awayFlag:'🇨🇴',date:'2026-07-03T22:00:00',venue:'Kansas City'},
-  {id:'m88',round:'R32',num:88,home:'Portugal',homeFlag:'🇵🇹',away:'Switzerland',awayFlag:'🇨🇭',date:'2026-07-04T02:00:00',venue:'Atlanta'},
-  {id:'m89',round:'R16',num:89,home:'Winner M74',homeFlag:'🏳️',away:'Winner M77',awayFlag:'🏳️',date:'2026-07-05T18:00:00',venue:'Philadelphia'},
-  {id:'m90',round:'R16',num:90,home:'Winner M73',homeFlag:'🏳️',away:'Winner M75',awayFlag:'🏳️',date:'2026-07-05T22:00:00',venue:'Houston'},
-  {id:'m91',round:'R16',num:91,home:'Winner M76',homeFlag:'🏳️',away:'Winner M78',awayFlag:'🏳️',date:'2026-07-06T18:00:00',venue:'New York/NJ'},
-  {id:'m92',round:'R16',num:92,home:'Winner M79',homeFlag:'🏳️',away:'Winner M80',awayFlag:'🏳️',date:'2026-07-06T22:00:00',venue:'Mexico City'},
-  {id:'m93',round:'R16',num:93,home:'Winner M83',homeFlag:'🏳️',away:'Winner M84',awayFlag:'🏳️',date:'2026-07-07T18:00:00',venue:'Dallas'},
-  {id:'m94',round:'R16',num:94,home:'Winner M81',homeFlag:'🏳️',away:'Winner M82',awayFlag:'🏳️',date:'2026-07-07T22:00:00',venue:'Seattle'},
-  {id:'m95',round:'R16',num:95,home:'Winner M86',homeFlag:'🏳️',away:'Winner M88',awayFlag:'🏳️',date:'2026-07-08T18:00:00',venue:'Atlanta'},
-  {id:'m96',round:'R16',num:96,home:'Winner M85',homeFlag:'🏳️',away:'Winner M87',awayFlag:'🏳️',date:'2026-07-08T22:00:00',venue:'Vancouver'},
-  {id:'m97',round:'QF',num:97,home:'Winner M89',homeFlag:'🏳️',away:'Winner M90',awayFlag:'🏳️',date:'2026-07-11T18:00:00',venue:'Houston'},
-  {id:'m98',round:'QF',num:98,home:'Winner M91',homeFlag:'🏳️',away:'Winner M92',awayFlag:'🏳️',date:'2026-07-11T22:00:00',venue:'Kansas City'},
-  {id:'m99',round:'QF',num:99,home:'Winner M93',homeFlag:'🏳️',away:'Winner M94',awayFlag:'🏳️',date:'2026-07-12T18:00:00',venue:'Dallas'},
-  {id:'m100',round:'QF',num:100,home:'Winner M95',homeFlag:'🏳️',away:'Winner M96',awayFlag:'🏳️',date:'2026-07-12T22:00:00',venue:'New York/NJ'},
-  {id:'m101',round:'SF',num:101,home:'Winner M97',homeFlag:'🏳️',away:'Winner M98',awayFlag:'🏳️',date:'2026-07-14T22:00:00',venue:'Dallas'},
-  {id:'m102',round:'SF',num:102,home:'Winner M99',homeFlag:'🏳️',away:'Winner M100',awayFlag:'🏳️',date:'2026-07-15T22:00:00',venue:'Atlanta'},
-  {id:'m103',round:'F',num:103,home:'Winner M101',homeFlag:'🏳️',away:'Winner M102',awayFlag:'🏳️',date:'2026-07-19T22:00:00',venue:'East Rutherford NJ'}
+  {id:'m73',round:'R32',num:73,home:'South Africa',homeFlag:'🇿🇦',away:'Canada',awayFlag:'🇨🇦',date:'2026-06-29T01:00:00Z',venue:'Los Angeles'},
+  {id:'m76',round:'R32',num:76,home:'Brazil',homeFlag:'🇧🇷',away:'Japan',awayFlag:'🇯🇵',date:'2026-06-29T23:00:00Z',venue:'Houston'},
+  {id:'m74',round:'R32',num:74,home:'Germany',homeFlag:'🇩🇪',away:'3rd Place TBD',awayFlag:'🏳️',date:'2026-06-30T02:30:00Z',venue:'Foxborough'},
+  {id:'m75',round:'R32',num:75,home:'Netherlands',homeFlag:'🇳🇱',away:'Morocco',awayFlag:'🇲🇦',date:'2026-06-30T07:00:00Z',venue:'Guadalajara'},
+  {id:'m78',round:'R32',num:78,home:'Ivory Coast',homeFlag:'🇨🇮',away:'Grp I Runner-up',awayFlag:'🏳️',date:'2026-06-30T23:00:00Z',venue:'Arlington'},
+  {id:'m77',round:'R32',num:77,home:'Grp I Winner',homeFlag:'🏳️',away:'3rd Place TBD',awayFlag:'🏳️',date:'2026-07-01T03:00:00Z',venue:'New Jersey'},
+  {id:'m79',round:'R32',num:79,home:'Mexico',homeFlag:'🇲🇽',away:'3rd Place TBD',awayFlag:'🏳️',date:'2026-07-01T07:00:00Z',venue:'Mexico City'},
+  {id:'m80',round:'R32',num:80,home:'Grp L Winner',homeFlag:'🏳️',away:'3rd Place TBD',awayFlag:'🏳️',date:'2026-07-01T22:00:00Z',venue:'Atlanta'},
+  {id:'m82',round:'R32',num:82,home:'Grp G Winner',homeFlag:'🏳️',away:'3rd Place TBD',awayFlag:'🏳️',date:'2026-07-02T02:00:00Z',venue:'Seattle'},
+  {id:'m81',round:'R32',num:81,home:'USA',homeFlag:'🇺🇸',away:'Bosnia-Herzegovina',awayFlag:'🇧🇦',date:'2026-07-02T06:00:00Z',venue:'Santa Clara'},
+  {id:'m83',round:'R32',num:83,home:'Spain',homeFlag:'🇪🇸',away:'Grp H/J/K Runner-up',awayFlag:'🏳️',date:'2026-07-02T23:00:00Z',venue:'Miami'},
+  {id:'m84',round:'R32',num:84,home:'Grp D Runner-up',homeFlag:'🏳️',away:'Grp G Runner-up',awayFlag:'🏳️',date:'2026-07-03T03:00:00Z',venue:'Dallas'},
+  {id:'m85',round:'R32',num:85,home:'England',homeFlag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',away:'Grp J/K Runner-up',awayFlag:'🏳️',date:'2026-07-03T07:00:00Z',venue:'Vancouver'},
+  {id:'m86',round:'R32',num:86,home:'Argentina',homeFlag:'🇦🇷',away:'Ecuador',awayFlag:'🇪🇨',date:'2026-07-03T23:00:00Z',venue:'Philadelphia'},
+  {id:'m87',round:'R32',num:87,home:'France',homeFlag:'🇫🇷',away:'Colombia',awayFlag:'🇨🇴',date:'2026-07-04T03:00:00Z',venue:'Kansas City'},
+  {id:'m88',round:'R32',num:88,home:'Portugal',homeFlag:'🇵🇹',away:'Switzerland',awayFlag:'🇨🇭',date:'2026-07-04T07:00:00Z',venue:'Atlanta'},
+  {id:'m89',round:'R16',num:89,home:'Winner M74',homeFlag:'🏳️',away:'Winner M77',awayFlag:'🏳️',date:'2026-07-05T23:00:00Z',venue:'Philadelphia'},
+  {id:'m90',round:'R16',num:90,home:'Winner M73',homeFlag:'🏳️',away:'Winner M75',awayFlag:'🏳️',date:'2026-07-06T03:00:00Z',venue:'Houston'},
+  {id:'m91',round:'R16',num:91,home:'Winner M76',homeFlag:'🏳️',away:'Winner M78',awayFlag:'🏳️',date:'2026-07-06T23:00:00Z',venue:'New York/NJ'},
+  {id:'m92',round:'R16',num:92,home:'Winner M79',homeFlag:'🏳️',away:'Winner M80',awayFlag:'🏳️',date:'2026-07-07T03:00:00Z',venue:'Mexico City'},
+  {id:'m93',round:'R16',num:93,home:'Winner M83',homeFlag:'🏳️',away:'Winner M84',awayFlag:'🏳️',date:'2026-07-07T23:00:00Z',venue:'Dallas'},
+  {id:'m94',round:'R16',num:94,home:'Winner M81',homeFlag:'🏳️',away:'Winner M82',awayFlag:'🏳️',date:'2026-07-08T03:00:00Z',venue:'Seattle'},
+  {id:'m95',round:'R16',num:95,home:'Winner M86',homeFlag:'🏳️',away:'Winner M88',awayFlag:'🏳️',date:'2026-07-08T23:00:00Z',venue:'Atlanta'},
+  {id:'m96',round:'R16',num:96,home:'Winner M85',homeFlag:'🏳️',away:'Winner M87',awayFlag:'🏳️',date:'2026-07-09T03:00:00Z',venue:'Vancouver'},
+  {id:'m97',round:'QF',num:97,home:'Winner M89',homeFlag:'🏳️',away:'Winner M90',awayFlag:'🏳️',date:'2026-07-11T23:00:00Z',venue:'Houston'},
+  {id:'m98',round:'QF',num:98,home:'Winner M91',homeFlag:'🏳️',away:'Winner M92',awayFlag:'🏳️',date:'2026-07-12T03:00:00Z',venue:'Kansas City'},
+  {id:'m99',round:'QF',num:99,home:'Winner M93',homeFlag:'🏳️',away:'Winner M94',awayFlag:'🏳️',date:'2026-07-12T23:00:00Z',venue:'Dallas'},
+  {id:'m100',round:'QF',num:100,home:'Winner M95',homeFlag:'🏳️',away:'Winner M96',awayFlag:'🏳️',date:'2026-07-13T03:00:00Z',venue:'New York/NJ'},
+  {id:'m101',round:'SF',num:101,home:'Winner M97',homeFlag:'🏳️',away:'Winner M98',awayFlag:'🏳️',date:'2026-07-15T03:00:00Z',venue:'Dallas'},
+  {id:'m102',round:'SF',num:102,home:'Winner M99',homeFlag:'🏳️',away:'Winner M100',awayFlag:'🏳️',date:'2026-07-16T03:00:00Z',venue:'Atlanta'},
+  {id:'m103',round:'F',num:103,home:'Winner M101',homeFlag:'🏳️',away:'Winner M102',awayFlag:'🏳️',date:'2026-07-20T03:00:00Z',venue:'East Rutherford NJ'}
 ];
 
 const ROUND_LABELS = {R32:'Round of 32',R16:'Round of 16',QF:'Quarter-finals',SF:'Semi-finals',F:'Final'};
@@ -292,6 +294,10 @@ async function init() {
     document.getElementById('register-screen').classList.add('show');
   }
   document.getElementById('reg-name').addEventListener('keydown', e => { if (e.key === 'Enter') register(); });
+  document.getElementById('reg-name').addEventListener('input', e => {
+    document.getElementById('join-btn').disabled = !e.target.value.trim();
+  });
+  document.getElementById('join-btn').disabled = true;
   document.getElementById('admin-pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkAdminPw(); });
 }
 
@@ -581,8 +587,8 @@ window.clearResult = async function(matchId) {
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 function fmtDate(str) {
   const d = new Date(str);
-  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short' }) + ' ' +
-         d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true });
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', timeZone:'Asia/Kolkata' }) + ' · ' +
+         d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12:true, timeZone:'Asia/Kolkata' }) + ' IST';
 }
 function escJs(s) { return s.replace(/'/g,"\\'"); }
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
