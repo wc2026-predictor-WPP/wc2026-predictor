@@ -1,0 +1,17 @@
+{
+  "name": "WPP P4 WC26 League",
+  "short_name": "WPP WC26",
+  "description": "WPP P4 World Cup 2026 Prediction League",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f3460",
+  "theme_color": "#0f3460",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://flagcdn.com/w40/un.png",
+      "sizes": "40x40",
+      "type": "image/png"
+    }
+  ]
+}
