@@ -377,11 +377,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchAdminTab('results',this)">&#x26BD; Results</button>
         <button class="admin-tab" onclick="switchAdminTab('today',this)">&#x1F4C5; Today</button>
+        <button class="admin-tab" onclick="switchAdminTab('editpicks',this)">&#x270F; Edit Picks</button>
         <button class="admin-tab" onclick="switchAdminTab('players',this)">&#x1F6AE; Players</button>
         <button class="admin-tab" onclick="switchAdminTab('tiebreakers',this)">&#x1F4CA; Tiebreakers</button>
       </div>
       <div id="admin-results"></div>
       <div id="admin-today" style="display:none"></div>
+      <div id="admin-editpicks" style="display:none"></div>
       <div id="admin-players" style="display:none"></div>
       <div id="admin-tiebreakers" style="display:none"></div>
     </div>
@@ -536,6 +538,7 @@ function rerenderActive(){
   if(adminUnlocked&&document.getElementById('admin-panel').classList.contains('show')){
     if(adminActiveTab==='results')renderAdminResults();
     else if(adminActiveTab==='today')renderAdminToday();
+    else if(adminActiveTab==='editpicks')renderAdminEditPicks();
     else if(adminActiveTab==='players')renderAdminPlayers();
     else if(adminActiveTab==='tiebreakers')renderAdminTiebreakers();
   }
@@ -970,9 +973,10 @@ window.checkAdminPw=function(){
 window.switchAdminTab=function(tab,btn){
   adminActiveTab=tab;
   document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-  ['results','today','players','tiebreakers'].forEach(t=>{document.getElementById('admin-'+t).style.display=t===tab?'block':'none';});
+  ['results','today','editpicks','players','tiebreakers'].forEach(t=>{document.getElementById('admin-'+t).style.display=t===tab?'block':'none';});
   if(tab==='results')renderAdminResults();
   else if(tab==='today')renderAdminToday();
+  else if(tab==='editpicks')renderAdminEditPicks();
   else if(tab==='players')renderAdminPlayers();
   else renderAdminTiebreakers();
 };
@@ -1048,6 +1052,77 @@ window.removePlayer=async function(pid,pname){
   await deleteDoc(doc(db,'players',pid));
   await deleteDoc(doc(db,'picks',pid));
   showToast(pname+' removed');renderAdminPlayers();
+};
+
+// ── ADMIN EDIT PICKS ──────────────────────────────────────────────────────────
+let adminEditPlayerId=null;
+
+function renderAdminEditPicks(){
+  const c=document.getElementById('admin-editpicks');if(!c)return;
+  const players=Object.entries(allData.players).sort((a,b)=>a[1].name.localeCompare(b[1].name));
+  if(!players.length){c.innerHTML='<div class="empty"><div class="emoji">&#x1F465;</div>No players yet</div>';return;}
+  // If no player selected, default to first
+  if(!adminEditPlayerId||!allData.players[adminEditPlayerId])adminEditPlayerId=players[0][0];
+  const selPlayer=allData.players[adminEditPlayerId]||{};
+  const selPicks=allData.picks[adminEditPlayerId]||{};
+  let html='<p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">Select a player then override any of their picks. Useful if someone couldn\'t access the app in time.</p>';
+  // Player selector
+  html+='<div style="margin-bottom:1rem"><label style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:4px">Select player</label>';
+  html+='<select id="admin-pick-player" onchange="adminSelectPlayer(this.value)" style="width:100%;padding:.5rem .75rem;border:1.5px solid var(--navy);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;font-weight:500;color:var(--navy)">';
+  players.forEach(([id,pd])=>{
+    html+='<option value="'+id+'" '+(id===adminEditPlayerId?'selected':'')+'>'+pd.name+' ('+getPoints(id)+' pts)</option>';
+  });
+  html+='</select></div>';
+  // Matches
+  const rounds=[...new Set(MATCHES.map(m=>m.round))];
+  rounds.forEach(round=>{
+    html+='<div class="section-label" style="margin-top:.75rem">'+(ROUND_LABELS[round]||round)+'</div>';
+    MATCHES.filter(m=>m.round===round).forEach(m=>{
+      const pick=selPicks[m.id]||'';
+      const result=allData.results[m.id];
+      const correct=pick&&result&&pick===result;
+      const wrong=pick&&result&&pick!==result;
+      html+='<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:.6rem .75rem;margin-bottom:.4rem">';
+      html+='<div style="font-size:11px;color:var(--muted);margin-bottom:.35rem">M'+m.num+' &middot; '+m.home+' vs '+m.away+' &middot; '+fmtDate(m.date)+(result?' &middot; <span style="color:var(--success);font-weight:500">&#x2705; '+result+'</span>':'')+'</div>';
+      html+='<div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">';
+      html+='<select id="epick-'+m.id+'" style="flex:1;min-width:160px;padding:.35rem .5rem;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:inherit">';
+      html+='<option value="">— No pick —</option>';
+      html+='<option value="'+escHtml(m.home)+'" '+(pick===m.home?'selected':'')+'>'+m.home+'</option>';
+      html+='<option value="'+escHtml(m.away)+'" '+(pick===m.away?'selected':'')+'>'+m.away+'</option>';
+      html+='</select>';
+      if(pick){html+='<span class="pts-pill '+(correct?'pts-win':wrong?'pts-loss':'pts-pending')+'">'+(correct?'+3':wrong?'0':'?')+' pts</span>';}
+      html+='<button onclick="saveAdminPick(\''+m.id+'\')" style="padding:.35rem .75rem;background:var(--navy);color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;font-family:inherit">Save</button>';
+      html+='</div></div>';
+    });
+  });
+  html+='<div style="display:flex;gap:.5rem;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)">';
+  html+='<button onclick="clearAllAdminPicks()" style="flex:1;padding:.6rem;background:var(--danger-bg);color:var(--danger);border:1px solid #ef9a9a;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">&#x1F5D1; Clear all picks for '+escHtml(selPlayer.name||'player')+'</button>';
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+window.adminSelectPlayer=function(pid){
+  adminEditPlayerId=pid;
+  renderAdminEditPicks();
+};
+
+window.saveAdminPick=async function(matchId){
+  const sel=document.getElementById('epick-'+matchId);
+  if(!sel)return;
+  const picks={...(allData.picks[adminEditPlayerId]||{})};
+  if(sel.value){picks[matchId]=sel.value;}
+  else{delete picks[matchId];}
+  await setDoc(doc(db,'picks',adminEditPlayerId),picks);
+  showToast('Pick saved');
+  renderAdminEditPicks();
+};
+
+window.clearAllAdminPicks=async function(){
+  const pname=(allData.players[adminEditPlayerId]||{}).name||'this player';
+  if(!confirm('Clear ALL picks for '+pname+'? This cannot be undone.'))return;
+  await setDoc(doc(db,'picks',adminEditPlayerId),{});
+  showToast('All picks cleared for '+pname);
+  renderAdminEditPicks();
 };
 
 // Also listen for finalGoals meta doc
