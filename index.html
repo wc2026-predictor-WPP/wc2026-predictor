@@ -734,6 +734,7 @@ function renderPicks(){
     html+='<div class="section-label">'+(ROUND_LABELS[round]||round)+'</div>';
     filtered.filter(m=>m.round===round).forEach(m=>{
       m=resolveMatch(m);
+      const lock=lockStatus(m);
       const locked=isLocked(m);
       const pick=myPicks[m.id];
       const result=allData.results[m.id];
