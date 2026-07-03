@@ -210,44 +210,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="loading"><div class="spinner"></div><div style="font-size:14px;opacity:.7">Loading League…</div></div>
 
-<!-- REGISTER -->
+<!-- LOGIN / REGISTER SCREEN -->
 <div id="register-screen">
   <div class="register-box">
     <div style="font-size:44px;margin-bottom:.4rem">&#x26BD;</div>
     <h1>WPP P4 WC26 League</h1>
     <p class="sub">Pick match winners &middot; 3 pts per correct call &middot; Entry &#x20B9;500</p>
-
-    <div class="reg-field">
-      <label>Your name</label>
-      <input type="text" id="reg-name" placeholder="e.g. Lionel Messi" maxlength="24" autocomplete="off"/>
+    <div style="display:flex;background:#f0f0f0;border-radius:8px;padding:3px;margin-bottom:1.25rem;gap:3px">
+      <button id="tab-login" onclick="switchAuthTab('login')" style="flex:1;padding:.45rem;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--navy);color:#fff;transition:all .15s">Login</button>
+      <button id="tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:.45rem;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;background:transparent;color:var(--muted);transition:all .15s">New Player</button>
     </div>
-
-    <div class="reg-divider">Tiebreaker predictions (sealed — private)</div>
-
-    <div class="reg-field">
-      <label>Who wins the World Cup? &#x1F3C6;</label>
-      <select id="reg-winner">
-        <option value="">— Select a team —</option>
-        <option>Argentina</option><option>France</option><option>Brazil</option>
-        <option>England</option><option>Spain</option><option>Germany</option>
-        <option>Netherlands</option><option>Portugal</option><option>Belgium</option>
-        <option>USA</option><option>Mexico</option><option>Colombia</option>
-        <option>Norway</option><option>Japan</option><option>Morocco</option>
-        <option>South Africa</option><option>Canada</option><option>Switzerland</option>
-        <option>Australia</option><option>Ivory Coast</option><option>Sweden</option>
-        <option>Senegal</option><option>Egypt</option><option>Paraguay</option>
-        <option>Cape Verde</option><option>Bosnia-Herzegovina</option><option>Other</option>
-      </select>
+    <div id="auth-login">
+      <div class="reg-field">
+        <label>Select your name</label>
+        <select id="login-select" style="width:100%;padding:.65rem .85rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;outline:none;background:#fff;color:var(--text)" onchange="document.getElementById('login-btn').disabled=!this.value">
+          <option value="">&#x2014; Select your name &#x2014;</option>
+        </select>
+      </div>
+      <button type="button" class="join-btn" id="login-btn" onclick="loginUser()" disabled>Login &#x2192;</button>
+      <div class="entry-note" style="margin-top:.65rem">Not listed? Switch to New Player to register.</div>
     </div>
-
-    <div class="reg-field">
-      <label>Total goals in the Final? &#x26BD; (your closest guess)</label>
-      <input type="number" id="reg-goals" placeholder="e.g. 3" min="0" max="20"/>
+    <div id="auth-register" style="display:none">
+      <div class="reg-field">
+        <label>Your name</label>
+        <input type="text" id="reg-name" placeholder="e.g. Lionel Messi" maxlength="24" autocomplete="off"/>
+      </div>
+      <div class="reg-divider">Tiebreaker predictions (sealed — private)</div>
+      <div class="reg-field">
+        <label>Who wins the World Cup? &#x1F3C6;</label>
+        <select id="reg-winner">
+          <option value="">— Select a team —</option>
+          <option>Argentina</option><option>France</option><option>Brazil</option>
+          <option>England</option><option>Spain</option><option>Germany</option>
+          <option>Netherlands</option><option>Portugal</option><option>Belgium</option>
+          <option>USA</option><option>Mexico</option><option>Colombia</option>
+          <option>Norway</option><option>Japan</option><option>Morocco</option>
+          <option>South Africa</option><option>Canada</option><option>Switzerland</option>
+          <option>Australia</option><option>Ivory Coast</option><option>Sweden</option>
+          <option>Senegal</option><option>Egypt</option><option>Paraguay</option>
+          <option>Cape Verde</option><option>Bosnia-Herzegovina</option><option>Ghana</option>
+          <option>Croatia</option><option>Austria</option><option>Ecuador</option>
+          <option>DR Congo</option><option>Algeria</option><option>Other</option>
+        </select>
+      </div>
+      <div class="reg-field">
+        <label>Total goals in the Final? &#x26BD; (your closest guess)</label>
+        <input type="number" id="reg-goals" placeholder="e.g. 3" min="0" max="20"/>
+      </div>
+      <button type="button" class="join-btn" id="join-btn" onclick="register()" disabled>Join the League &#x2192;</button>
+      <div class="one-per" id="one-per-msg">&#x26A0; Name already taken &mdash; 1 entry per person</div>
+      <div class="entry-note">Tiebreaker predictions are private and only used if players finish level on points</div>
     </div>
-
-    <button type="button" class="join-btn" id="join-btn" onclick="register()" disabled>Join the League &rarr;</button>
-    <div class="one-per" id="one-per-msg">&#x26A0; Name already taken &mdash; 1 entry per person</div>
-    <div class="entry-note">Tiebreaker predictions are private and only used if players finish level on points</div>
   </div>
 </div>
 
@@ -377,12 +390,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchAdminTab('results',this)">&#x26BD; Results</button>
         <button class="admin-tab" onclick="switchAdminTab('today',this)">&#x1F4C5; Today</button>
+        <button class="admin-tab" onclick="switchAdminTab('fixtures',this)">&#x1F4CB; Fixtures</button>
         <button class="admin-tab" onclick="switchAdminTab('editpicks',this)">&#x270F; Edit Picks</button>
         <button class="admin-tab" onclick="switchAdminTab('players',this)">&#x1F6AE; Players</button>
         <button class="admin-tab" onclick="switchAdminTab('tiebreakers',this)">&#x1F4CA; Tiebreakers</button>
       </div>
       <div id="admin-results"></div>
       <div id="admin-today" style="display:none"></div>
+      <div id="admin-fixtures" style="display:none"></div>
       <div id="admin-editpicks" style="display:none"></div>
       <div id="admin-players" style="display:none"></div>
       <div id="admin-tiebreakers" style="display:none"></div>
@@ -394,7 +409,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import{getFirestore,doc,getDoc,setDoc,deleteDoc,onSnapshot,collection}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import{getFirestore,doc,getDoc,setDoc,deleteDoc,onSnapshot,collection,getDocs}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyBV03dLo4oSRXMTY7s4dzbgww3Mso5n9mQ",authDomain:"wc2026-predictor-4a1f3.firebaseapp.com",projectId:"wc2026-predictor-4a1f3",storageBucket:"wc2026-predictor-4a1f3.firebasestorage.app",messagingSenderId:"266537802076",appId:"1:266537802076:web:47f833a355974162cd0999"};
 const ADMIN_PASSWORD="wc2026admin";
@@ -466,20 +481,60 @@ let countdownInterval=null;
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 async function init(){
+  // Pre-load players for login dropdown
+  const playersSnap=await getDocs(collection(db,'players'));
+  playersSnap.forEach(d=>{allData.players[d.id]=d.data();});
+  populateLoginDropdown();
+
   const stored=localStorage.getItem('wc26_user');
   if(stored){
     currentUser=JSON.parse(stored);
-    await ensurePlayerDoc();
-    startListeners();
-    showApp();
+    const snap=await getDoc(doc(db,'players',currentUser.id));
+    if(snap.exists()){
+      startListeners();showApp();
+    } else {
+      localStorage.removeItem('wc26_user');
+      document.getElementById('loading').style.display='none';
+      document.getElementById('register-screen').classList.add('show');
+    }
   } else {
     document.getElementById('loading').style.display='none';
     document.getElementById('register-screen').classList.add('show');
   }
-  document.getElementById('reg-name').addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElementById('join-btn').disabled)register();});
-  document.getElementById('reg-name').addEventListener('input',checkNameAvail);
+  const ni=document.getElementById('reg-name');
+  if(ni){ni.addEventListener('keydown',e=>{if(e.key==='Enter'&&!document.getElementById('join-btn').disabled)register();});ni.addEventListener('input',checkNameAvail);}
   document.getElementById('admin-pw-input').addEventListener('keydown',e=>{if(e.key==='Enter')checkAdminPw();});
 }
+
+function populateLoginDropdown(){
+  const sel=document.getElementById('login-select');if(!sel)return;
+  const sorted=Object.entries(allData.players).sort((a,b)=>a[1].name.localeCompare(b[1].name));
+  sel.innerHTML='<option value="">&#x2014; Select your name &#x2014;</option>';
+  sorted.forEach(([id,pd])=>{sel.innerHTML+='<option value="'+id+'">'+pd.name+'</option>';});
+}
+
+window.switchAuthTab=function(tab){
+  const isLogin=tab==='login';
+  document.getElementById('auth-login').style.display=isLogin?'block':'none';
+  document.getElementById('auth-register').style.display=isLogin?'none':'block';
+  const tl=document.getElementById('tab-login');const tr=document.getElementById('tab-register');
+  tl.style.background=isLogin?'var(--navy)':'transparent';tl.style.color=isLogin?'#fff':'var(--muted)';tl.style.fontWeight=isLogin?'600':'500';
+  tr.style.background=!isLogin?'var(--navy)':'transparent';tr.style.color=!isLogin?'#fff':'var(--muted)';tr.style.fontWeight=!isLogin?'600':'500';
+};
+
+window.loginUser=async function(){
+  const sel=document.getElementById('login-select');
+  if(!sel||!sel.value)return;
+  const snap=await getDoc(doc(db,'players',sel.value));
+  if(!snap.exists()){showToast('Player not found');return;}
+  const pd=snap.data();
+  currentUser={id:sel.value,name:pd.name,initials:pd.initials||pd.name[0].toUpperCase()};
+  localStorage.setItem('wc26_user',JSON.stringify(currentUser));
+  startListeners();
+  document.getElementById('register-screen').classList.remove('show');
+  showApp();
+  showToast('Welcome back, '+pd.name+'!');
+};
 
 function checkNameAvail(){
   const name=document.getElementById('reg-name').value.trim().toLowerCase();
@@ -538,6 +593,7 @@ function rerenderActive(){
   if(adminUnlocked&&document.getElementById('admin-panel').classList.contains('show')){
     if(adminActiveTab==='results')renderAdminResults();
     else if(adminActiveTab==='today')renderAdminToday();
+    else if(adminActiveTab==='fixtures')renderAdminFixtures();
     else if(adminActiveTab==='editpicks')renderAdminEditPicks();
     else if(adminActiveTab==='players')renderAdminPlayers();
     else if(adminActiveTab==='tiebreakers')renderAdminTiebreakers();
@@ -641,7 +697,11 @@ window.makePick=async function(matchId,team){
   await setDoc(doc(db,'picks',currentUser.id),myPicks);
 };
 
-// ── RENDER PICKS ──────────────────────────────────────────────────────────────
+// Returns match with home/away overridden by admin fixtures if set
+function resolveMatch(m){
+  const fx=(allData.fixtures||{})[m.id]||{};
+  return{...m, home:fx.home||m.home, away:fx.away||m.away};
+}
 function renderPicks(){
   const c=document.getElementById('panel-picks');if(!c)return;
   const myPicks=allData.picks[currentUser.id]||{};
@@ -673,7 +733,7 @@ function renderPicks(){
   rounds.forEach(round=>{
     html+='<div class="section-label">'+(ROUND_LABELS[round]||round)+'</div>';
     filtered.filter(m=>m.round===round).forEach(m=>{
-      const lock=lockStatus(m);
+      m=resolveMatch(m);
       const locked=isLocked(m);
       const pick=myPicks[m.id];
       const result=allData.results[m.id];
@@ -753,12 +813,19 @@ function renderLeaderboard(){
   const players=tiebreakSort(raw);
   const confirmed=Object.keys(allData.results).length;
   const pool=players.length*500;
-  let html='<div class="stat-grid"><div class="stat-card"><div class="stat-val">'+players.length+'</div><div class="stat-label">Players</div></div><div class="stat-card"><div class="stat-val">'+confirmed+'/'+MATCHES.length+'</div><div class="stat-label">Results in</div></div><div class="stat-card"><div class="stat-val">&#x20B9;'+pool.toLocaleString('en-IN')+'</div><div class="stat-label">Prize pool</div></div></div>';
+  const paid=allData.paid||{};
+  const paidCount=players.filter(p=>paid[p.id]).length;
+  const paidTotal=paidCount*500;
+  let html='<div class="stat-grid">';
+  html+='<div class="stat-card"><div class="stat-val">'+players.length+'</div><div class="stat-label">Players</div></div>';
+  html+='<div class="stat-card"><div class="stat-val">'+confirmed+'/'+MATCHES.length+'</div><div class="stat-label">Results in</div></div>';
+  html+='<div class="stat-card"><div class="stat-val" style="color:var(--success)">&#x20B9;'+paidTotal.toLocaleString('en-IN')+'</div><div class="stat-label">Collected ('+paidCount+'/'+players.length+' paid)</div></div>';
+  html+='</div>';
   // Share button
   html+='<button class="share-btn" onclick="copyShareMsg()">&#x1F4E4; Copy standings to share on WhatsApp / Teams</button>';
   // Prize
   if(pool>0){
-    html+='<div class="prize-card"><h3>&#x1F3C6; Prize Distribution</h3>';
+    html+='<div class="prize-card"><h3>&#x1F3C6; Prize Distribution &nbsp;<span style="font-size:11px;opacity:.6">(based on &#x20B9;'+pool.toLocaleString('en-IN')+' total pool)</span></h3>';
     PRIZE_DIST.forEach(p=>{const amt=Math.round(pool*p.pct/100);html+='<div class="prize-row"><span class="prize-medal">'+p.medal+'</span><span class="prize-label">'+p.label+'</span><span class="prize-pct">'+p.pct+'%</span><span class="prize-amt">&#x20B9;'+amt.toLocaleString('en-IN')+'</span></div>';});
     html+='</div>';
   }
@@ -768,19 +835,16 @@ function renderLeaderboard(){
     const rCls=i===0?'r1':i===1?'r2':i===2?'r3':i===3?'r4':'rn';
     const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':i===3?'🏅':'';
     const isMe=p.id===currentUser.id;
-    // Round breakdown pills
+    const isPaid=!!(paid[p.id]);
     const rdKeys=['R32','R16','QF','SF','F'];
     const rdLabels={'R32':'R32','R16':'R16','QF':'QF','SF':'SF','F':'Final'};
     let rdHtml='<div class="round-breakdown">';
-    rdKeys.forEach(r=>{
-      const rPts=p.byRound[r]||0;
-      rdHtml+='<span class="rb-pill'+(rPts>0?' has-pts':'')+'">'+(rdLabels[r])+': '+rPts+'</span>';
-    });
+    rdKeys.forEach(r=>{const rPts=p.byRound[r]||0;rdHtml+='<span class="rb-pill'+(rPts>0?' has-pts':'')+'">'+(rdLabels[r])+': '+rPts+'</span>';});
     rdHtml+='</div>';
     html+='<div class="lb-row" style="'+(isMe?'outline:2px solid var(--navy);outline-offset:-2px;border-radius:6px':'')+'">';
     html+='<div class="rank-circle '+rCls+'">'+(i+1)+'</div>';
-    html+='<div class="avatar-sm">'+(p.initials||'?')+'</div>';
-    html+='<div style="flex:1;min-width:0"><div class="lb-name">'+p.name+' '+medal+(isMe?' <span style="font-size:10px;color:rgba(255,255,255,.5)">(you)</span>':'')+'</div>'+rdHtml+'</div>';
+    html+='<div class="avatar-sm" style="background:'+(isPaid?'var(--success)':'var(--navy)')+'">'+(p.initials||'?')+'</div>';
+    html+='<div style="flex:1;min-width:0"><div class="lb-name">'+p.name+' '+medal+(isPaid?' <span title="Entry paid" style="color:var(--success)">&#x2B50;</span>':'')+(isMe?' <span style="font-size:10px;color:var(--muted)">(you)</span>':'')+'</div>'+rdHtml+'</div>';
     html+='<div style="text-align:right;flex-shrink:0"><div class="lb-pts">'+p.pts+'</div><div class="lb-pts-label">pts &middot; '+p.picks+' picks</div></div></div>';
   });
   c.innerHTML=html;
@@ -794,6 +858,7 @@ function renderAllPicks(){
   let html='<div class="info-banner">Everyone\'s picks shown after a match kicks off.</div>';
   let hasAny=false;
   MATCHES.forEach(m=>{
+    m=resolveMatch(m);
     const locked=isLocked(m);const result=allData.results[m.id];
     if(!locked&&!result)return;hasAny=true;
     html+='<div class="card" style="margin-bottom:.5rem"><div class="match-meta" style="margin-bottom:.4rem"><span class="match-num" style="font-weight:500">M'+m.num+': '+m.home+' vs '+m.away+'</span>'+(result?'<span class="pts-pill pts-win" style="font-size:10px">&#x2705; '+result+'</span>':'<span class="pts-pill pts-pending" style="font-size:10px">Pending</span>')+'</div>';
@@ -811,7 +876,7 @@ function renderAllPicks(){
 // ── RESULTS HISTORY ───────────────────────────────────────────────────────────
 function renderResultsHistory(){
   const c=document.getElementById('panel-results-history');if(!c)return;
-  const completed=MATCHES.filter(m=>allData.results[m.id]);
+  const completed=MATCHES.map(m=>resolveMatch(m)).filter(m=>allData.results[m.id]);
   if(!completed.length){
     c.innerHTML='<div class="empty"><div class="emoji">&#x23F3;</div>No results confirmed yet.<br>Check back after the first matches kick off.</div>';
     return;
@@ -973,9 +1038,10 @@ window.checkAdminPw=function(){
 window.switchAdminTab=function(tab,btn){
   adminActiveTab=tab;
   document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-  ['results','today','editpicks','players','tiebreakers'].forEach(t=>{document.getElementById('admin-'+t).style.display=t===tab?'block':'none';});
+  ['results','today','fixtures','editpicks','players','tiebreakers'].forEach(t=>{document.getElementById('admin-'+t).style.display=t===tab?'block':'none';});
   if(tab==='results')renderAdminResults();
   else if(tab==='today')renderAdminToday();
+  else if(tab==='fixtures')renderAdminFixtures();
   else if(tab==='editpicks')renderAdminEditPicks();
   else if(tab==='players')renderAdminPlayers();
   else renderAdminTiebreakers();
@@ -987,7 +1053,8 @@ function renderAdminResults(){
   let html='<p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">Select the winning team for completed matches. Points update instantly for all players.</p>';
   rounds.forEach(round=>{
     html+='<div class="section-label" style="margin-top:.75rem">'+(ROUND_LABELS[round]||round)+'</div>';
-    MATCHES.filter(m=>m.round===round).forEach(m=>{
+    MATCHES.filter(m=>m.round===round).forEach(raw=>{
+      const m=resolveMatch(raw);
       const result=allData.results[m.id];
       html+='<div class="admin-match"><div class="admin-match-name">M'+m.num+': '+m.home+' vs '+m.away+' <span style="font-size:11px;color:var(--muted)">&middot; '+fmtDate(m.date)+'</span></div>'+(result?'<div class="result-confirmed">&#x2705; Winner: '+result+'</div>':'')+'<div class="admin-match-row" style="margin-top:4px"><select id="admin-sel-'+m.id+'"><option value="">&#x2014; Select winner &#x2014;</option><option value="'+escHtml(m.home)+'" '+(result===m.home?'selected':'')+'>'+m.home+'</option><option value="'+escHtml(m.away)+'" '+(result===m.away?'selected':'')+'>'+m.away+'</option></select><button onclick="saveResult(\''+m.id+'\')">Save</button>'+(result?'<button class="clear-btn" onclick="clearResult(\''+m.id+'\')">Clear</button>':'')+'</div></div>';
     });
@@ -1006,17 +1073,111 @@ window.saveFinalGoals=async function(){
   showToast('Final goals saved');
 };
 
+// ── ADMIN FIXTURES MANAGER ────────────────────────────────────────────────────
+function renderAdminFixtures(){
+  const c=document.getElementById('admin-fixtures');if(!c)return;
+  const fx=allData.fixtures||{};
+  // Only show R16 onwards — R32 is already hardcoded
+  const laterMatches=MATCHES.filter(m=>m.round!=='R32');
+  const rounds=[...new Set(laterMatches.map(m=>m.round))];
+  let html='<p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">As each round concludes, enter the actual team names for upcoming matches. This updates what players see when making picks.</p>';
+  html+='<div style="background:var(--info-bg);border:1px solid #90caf9;border-radius:var(--radius-sm);padding:.6rem .85rem;margin-bottom:1rem;font-size:12px;color:var(--info)">&#x2139; Leave a field blank to keep the placeholder. Save each match individually.</div>';
+  rounds.forEach(round=>{
+    html+='<div class="section-label" style="margin-top:.75rem">'+(ROUND_LABELS[round]||round)+'</div>';
+    laterMatches.filter(m=>m.round===round).forEach(m=>{
+      const saved=fx[m.id]||{};
+      const homeVal=saved.home||'';
+      const awayVal=saved.away||'';
+      html+='<div class="admin-match">';
+      html+='<div class="admin-match-name">M'+m.num+' &middot; '+m.venue+' &middot; '+fmtDate(m.date)+'</div>';
+      html+='<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:.4rem;align-items:center;margin-top:.4rem">';
+      html+='<input type="text" id="fx-home-'+m.id+'" value="'+escHtml(homeVal)+'" placeholder="'+escHtml(m.home)+'" style="padding:.35rem .5rem;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:inherit;width:100%"/>';
+      html+='<span style="text-align:center;font-size:11px;color:var(--muted)">vs</span>';
+      html+='<input type="text" id="fx-away-'+m.id+'" value="'+escHtml(awayVal)+'" placeholder="'+escHtml(m.away)+'" style="padding:.35rem .5rem;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:inherit;width:100%"/>';
+      html+='</div>';
+      html+='<div style="display:flex;gap:.4rem;margin-top:.4rem">';
+      html+='<button onclick="saveFixture(\''+m.id+'\')" style="flex:1;padding:.35rem;background:var(--navy);color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;font-family:inherit">Save</button>';
+      if(homeVal||awayVal)html+='<button onclick="clearFixture(\''+m.id+'\')" style="padding:.35rem .65rem;background:#f5f5f5;color:var(--muted);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;cursor:pointer;font-family:inherit">Clear</button>';
+      html+='</div></div>';
+    });
+  });
+  html+='<div style="display:flex;gap:.5rem;margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--border)">';
+  html+='<button onclick="saveAllFixtures()" style="flex:1;padding:.65rem;background:var(--success);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">&#x2705; Save All at Once</button>';
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+window.saveFixture=async function(matchId){
+  const homeEl=document.getElementById('fx-home-'+matchId);
+  const awayEl=document.getElementById('fx-away-'+matchId);
+  if(!homeEl||!awayEl)return;
+  const fx={...(allData.fixtures||{})};
+  if(!fx[matchId])fx[matchId]={};
+  if(homeEl.value.trim())fx[matchId].home=homeEl.value.trim();
+  else delete fx[matchId].home;
+  if(awayEl.value.trim())fx[matchId].away=awayEl.value.trim();
+  else delete fx[matchId].away;
+  if(!fx[matchId].home&&!fx[matchId].away)delete fx[matchId];
+  await setDoc(doc(db,'meta','fixtures'),fx);
+  showToast('Fixture saved');
+};
+
+window.clearFixture=async function(matchId){
+  const fx={...(allData.fixtures||{})};
+  delete fx[matchId];
+  await setDoc(doc(db,'meta','fixtures'),fx);
+  showToast('Fixture cleared');
+  renderAdminFixtures();
+};
+
+window.saveAllFixtures=async function(){
+  const fx={...(allData.fixtures||{})};
+  const laterMatches=MATCHES.filter(m=>m.round!=='R32');
+  laterMatches.forEach(m=>{
+    const homeEl=document.getElementById('fx-home-'+m.id);
+    const awayEl=document.getElementById('fx-away-'+m.id);
+    if(!homeEl||!awayEl)return;
+    const h=homeEl.value.trim();const a=awayEl.value.trim();
+    if(h||a){if(!fx[m.id])fx[m.id]={};if(h)fx[m.id].home=h;if(a)fx[m.id].away=a;}
+  });
+  await setDoc(doc(db,'meta','fixtures'),fx);
+  showToast('All fixtures saved!');
+  renderAdminFixtures();
+};
+
+// ── ADMIN PLAYERS + PAYMENT ───────────────────────────────────────────────────
 function renderAdminPlayers(){
   const c=document.getElementById('admin-players');if(!c)return;
+  const paid=allData.paid||{};
   const players=Object.entries(allData.players).sort((a,b)=>a[1].name.localeCompare(b[1].name));
-  let html='<p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">Remove a player to delete their registration and all picks. Cannot be undone.</p>';
+  const paidCount=players.filter(([id])=>paid[id]).length;
+  let html='<p style="font-size:12px;color:var(--muted);margin-bottom:.75rem">Mark payments received and remove players if needed.</p>';
+  html+='<div style="display:flex;gap:.5rem;margin-bottom:1rem">';
+  html+='<div style="flex:1;background:var(--success-bg);border:1px solid #a5d6a7;border-radius:var(--radius-sm);padding:.6rem .85rem;text-align:center"><div style="font-size:18px;font-weight:700;color:var(--success)">&#x20B9;'+((paidCount)*500).toLocaleString('en-IN')+'</div><div style="font-size:11px;color:var(--success);margin-top:2px">Collected ('+paidCount+' paid)</div></div>';
+  html+='<div style="flex:1;background:var(--warning-bg);border:1px solid #ffcc80;border-radius:var(--radius-sm);padding:.6rem .85rem;text-align:center"><div style="font-size:18px;font-weight:700;color:var(--warning)">&#x20B9;'+((players.length-paidCount)*500).toLocaleString('en-IN')+'</div><div style="font-size:11px;color:var(--warning);margin-top:2px">Pending ('+( players.length-paidCount)+' unpaid)</div></div>';
+  html+='</div>';
   if(!players.length)html+='<div class="empty"><div class="emoji">&#x1F465;</div>No players yet</div>';
   players.forEach(([id,pd])=>{
     const pts=getPoints(id);const picks=Object.keys(allData.picks[id]||{}).length;
-    html+='<div class="player-remove-row"><div class="avatar-sm">'+(pd.initials||'?')+'</div><div style="flex:1"><div class="pname">'+pd.name+'</div><div class="pinfo">'+pts+' pts &middot; '+picks+' picks</div></div><button class="remove-btn" onclick="removePlayer(\''+id+'\',\''+escJs(pd.name)+'\')">Remove</button></div>';
+    const isPaid=!!paid[id];
+    html+='<div class="player-remove-row" style="border-color:'+(isPaid?'#a5d6a7':'var(--border)')+';">';
+    html+='<div class="avatar-sm" style="background:'+(isPaid?'var(--success)':'var(--navy)')+'">'+(pd.initials||'?')+'</div>';
+    html+='<div style="flex:1"><div class="pname">'+pd.name+(isPaid?' <span style="color:var(--success);font-size:13px">&#x2B50;</span>':'')+'</div><div class="pinfo">'+pts+' pts &middot; '+picks+' picks &middot; '+(isPaid?'<span style="color:var(--success);font-weight:500">Paid &#x20B9;500</span>':'<span style="color:var(--warning)">Payment pending</span>')+'</div></div>';
+    html+='<div style="display:flex;gap:.4rem">';
+    html+='<button onclick="togglePaid(\''+id+'\')" style="padding:.3rem .65rem;background:'+(isPaid?'#f5f5f5':'var(--success-bg)')+';color:'+(isPaid?'var(--muted)':'var(--success)')+';border:1px solid '+(isPaid?'var(--border)':'#a5d6a7')+';border-radius:var(--radius-sm);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit">'+(isPaid?'Unmark':'✓ Paid')+'</button>';
+    html+='<button onclick="removePlayer(\''+id+'\',\''+escJs(pd.name)+'\')" class="remove-btn">Remove</button>';
+    html+='</div></div>';
   });
   c.innerHTML=html;
 }
+
+window.togglePaid=async function(playerId){
+  const paid={...(allData.paid||{})};
+  if(paid[playerId])delete paid[playerId];
+  else paid[playerId]=true;
+  await setDoc(doc(db,'meta','paid'),paid);
+  showToast(paid[playerId]?'Marked as paid':'Unmarked');
+};
 
 function renderAdminTiebreakers(){
   const c=document.getElementById('admin-tiebreakers');if(!c)return;
@@ -1127,10 +1288,12 @@ window.clearAllAdminPicks=async function(){
 
 // Also listen for finalGoals meta doc
 function startListeners(){
-  onSnapshot(collection(db,'players'),snap=>{allData.players={};snap.forEach(d=>{allData.players[d.id]=d.data();});rerenderActive();checkNameAvail();});
+  onSnapshot(collection(db,'players'),snap=>{allData.players={};snap.forEach(d=>{allData.players[d.id]=d.data();});rerenderActive();checkNameAvail();populateLoginDropdown();});
   onSnapshot(collection(db,'picks'),snap=>{allData.picks={};snap.forEach(d=>{allData.picks[d.id]=d.data();});rerenderActive();});
   onSnapshot(doc(db,'meta','results'),snap=>{allData.results=snap.exists()?snap.data():{};rerenderActive();});
   onSnapshot(doc(db,'meta','finalGoals'),snap=>{allData.finalGoals=snap.exists()?snap.data().value:null;rerenderActive();});
+  onSnapshot(doc(db,'meta','fixtures'),snap=>{allData.fixtures=snap.exists()?snap.data():{};rerenderActive();});
+  onSnapshot(doc(db,'meta','paid'),snap=>{allData.paid=snap.exists()?snap.data():{};rerenderActive();});
 }
 
 function fmtDate(str){
