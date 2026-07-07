@@ -738,7 +738,7 @@ function renderPicks(){
       const locked=isLocked(m);
       const pick=myPicks[m.id];
       const result=allData.results[m.id];
-      const gotRight=result&&pick&&pick===result;
+      const gotRight=result&&pick&&(pick===result||(pick===m.home&&result===m.home)||(pick===m.away&&result===m.away)||(pick===resolveMatch(MATCHES.find(x=>x.id===m.id)).home&&result===resolveMatch(MATCHES.find(x=>x.id===m.id)).home)||(pick===resolveMatch(MATCHES.find(x=>x.id===m.id)).away&&result===resolveMatch(MATCHES.find(x=>x.id===m.id)).away));
       html+='<div class="card">';
       html+='<div class="match-meta"><span class="match-num">Match '+m.num+' &middot; '+m.venue+'</span><div class="match-right"><span class="kickoff-time">'+fmtDate(m.date)+'</span><span class="'+lock.cls+'" id="cd-'+m.id+'">'+lock.label+'</span></div></div>';
       html+='<div class="teams-row">';
@@ -757,7 +757,18 @@ function renderPicks(){
 // ── POINTS + TIEBREAKER LOGIC ─────────────────────────────────────────────────
 function getPoints(pid){
   let pts=0;const picks=allData.picks[pid]||{};
-  for(const mid in allData.results){if(picks[mid]&&picks[mid]===allData.results[mid])pts+=3;}
+  for(const mid in allData.results){
+    const winner=allData.results[mid];
+    const pick=picks[mid];
+    if(!pick||!winner)continue;
+    if(pick===winner){pts+=3;continue;}
+    const m=MATCHES.find(x=>x.id===mid);
+    if(!m)continue;
+    const rm=resolveMatch(m);
+    // pick could be original placeholder (e.g. "Winner M73") or resolved name or result name
+    if(winner===rm.home&&(pick===m.home||pick===rm.home)){pts+=3;continue;}
+    if(winner===rm.away&&(pick===m.away||pick===rm.away)){pts+=3;continue;}
+  }
   return pts;
 }
 function getPointsByRound(pid){
@@ -765,7 +776,13 @@ function getPointsByRound(pid){
   const byRound={};
   MATCHES.forEach(m=>{
     if(!byRound[m.round])byRound[m.round]=0;
-    if(allData.results[m.id]&&picks[m.id]&&picks[m.id]===allData.results[m.id])byRound[m.round]+=3;
+    const winner=allData.results[m.id];
+    const pick=picks[m.id];
+    if(!pick||!winner)return;
+    const rm=resolveMatch(m);
+    if(pick===winner){byRound[m.round]+=3;return;}
+    if(winner===rm.home&&(pick===m.home||pick===rm.home)){byRound[m.round]+=3;return;}
+    if(winner===rm.away&&(pick===m.away||pick===rm.away)){byRound[m.round]+=3;return;}
   });
   return byRound;
 }
