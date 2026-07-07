@@ -617,14 +617,14 @@ function updateNudgeBanner(){
   const in72h=now.getTime()+72*3600000;
   // Only matches kicking off within 72 hours that are still open and unpicked
   const openUnpicked72=MATCHES.filter(m=>{
-    if(isLocked(m))return false;
+    if(new Date(m.date)<=new Date())return false; // already kicked off
     const ko=new Date(m.date).getTime();
     if(ko>in72h)return false;
     return!myPicks[m.id];
   });
   const soon=openUnpicked72.filter(m=>{
     const diff=new Date(m.date)-now;
-    return diff>0&&diff<3600000*3; // closing within 3h
+    return diff>0&&diff<3600000; // kicking off within 1hr
   });
   const banner=document.getElementById('nudge-banner');
   const text=document.getElementById('nudge-text');
@@ -665,7 +665,7 @@ function startCountdownLoop(){
 }
 
 // ── LOCK LOGIC ─────────────────────────────────────────────────────────────────
-function isLocked(m){return(new Date(m.date)-new Date())<3600000;}
+function isLocked(m){return(new Date(m.date)-new Date())<=0;}
 function lockStatus(m){
   const diff=new Date(m.date)-new Date();
   if(diff<=0)return{cls:'lock-badge lock-locked',label:'Kicked off'};
